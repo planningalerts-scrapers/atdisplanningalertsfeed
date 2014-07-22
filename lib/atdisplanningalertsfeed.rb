@@ -1,6 +1,7 @@
 require 'atdisplanningalertsfeed/version'
 require 'atdis'
 require 'scraperwiki-morph'
+require 'cgi'
 
 module ATDISPlanningAlertsFeed
   def self.save(url, options = {})
@@ -30,7 +31,7 @@ module ATDISPlanningAlertsFeed
                 application.locations.first.address.postcode
 
       record = {
-        council_reference: application.info.dat_id,
+        council_reference: CGI.unescape(application.info.dat_id),
         address:           address,
         description:       application.info.description,
         info_url:          application.reference.more_info_url.to_s,
