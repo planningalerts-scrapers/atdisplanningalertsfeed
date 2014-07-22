@@ -37,9 +37,9 @@ module ATDISPlanningAlertsFeed
         info_url:          application.reference.more_info_url.to_s,
         comment_url:       application.reference.comments_url.to_s,
         date_scraped:      Date.today,
-        date_received:     application.info.lodgement_date,
-        on_notice_from:    application.info.notification_start_date,
-        on_notice_to:      application.info.notification_end_date
+        date_received:     (application.info.lodgement_date.to_date if application.info.lodgement_date),
+        on_notice_from:    (application.info.notification_start_date.to_date if application.info.notification_start_date),
+        on_notice_to:      (application.info.notification_end_date.to_date if application.info.notification_end_date)
       }
 
       if (ScraperWikiMorph.select("* from data where `council_reference`='#{record[:council_reference]}'").empty? rescue true)
