@@ -27,7 +27,7 @@ module ATDISPlanningAlertsFeed
       # TODO: Only using the first address because PA doesn't support multiple addresses right now
       address = application.locations.first.address.street + ', ' +
                 application.locations.first.address.suburb + ', ' +
-                application.locations.first.address.state  +
+                application.locations.first.address.state  + ' ' +
                 application.locations.first.address.postcode
 
       record = {
