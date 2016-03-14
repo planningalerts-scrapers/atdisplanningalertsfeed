@@ -14,13 +14,13 @@ source 'https://rubygems.org'
 gem 'atdisplanningalertsfeed', github: 'planningalerts-scrapers/atdisplanningalertsfeed'
 ```
 
-* Add this to your `scraper.rb`, replacing the URL:
+* Add this to your `scraper.rb`, replacing the URL with the ATDIS **base URL** you want to fetch data from:
 
 ```ruby
 #!/usr/bin/env ruby
 Bundler.require
 
-url = 'http://myhorizon.solorient.com.au/Horizon/@@horizondap_uralla@@/atdis/1.0/applications.json'
+url = 'http://myhorizon.solorient.com.au/Horizon/@@horizondap_uralla@@/atdis/1.0'
 
 ATDISPlanningAlertsFeed.save(url)
 ```
