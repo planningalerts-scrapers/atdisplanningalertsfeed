@@ -11,10 +11,15 @@ module ATDISPlanningAlertsFeed
     page = feed.applications(lodgement_date_start: options[:lodgement_date_start], lodgement_date_end: options[:lodgement_date_end])
 
     # Save the first page
-    save_page(page)
+    pages_processed = []
+    pages_processed << page.pagination.current if save_page(page)
 
     while page = page.next_page
-      save_page(page)
+      # Some ATDIS feeds incorrectly provide pagination
+      # and permit looping; so halt processing if we've already processed this page
+      break unless pages_processed.index(page.pagination.current).nil?
+
+      pages_processed << page.pagination.current if save_page(page)
     end
   end
 
