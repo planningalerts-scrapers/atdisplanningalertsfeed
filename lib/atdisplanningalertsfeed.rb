@@ -17,7 +17,10 @@ module ATDISPlanningAlertsFeed
     while page = page.next_page
       # Some ATDIS feeds incorrectly provide pagination
       # and permit looping; so halt processing if we've already processed this page
-      break unless pages_processed.index(page.pagination.current).nil?
+      unless pages_processed.index(page.pagination.current).nil?
+        puts "Page #{page.pagination.current} already processed; halting"
+        break
+      end
 
       pages_processed << page.pagination.current if save_page(page)
     end
