@@ -11,10 +11,9 @@ module ATDISPlanningAlertsFeed
 
     options[:lodgement_date_start] = (options[:lodgement_date_start] || Date.today - 30)
     options[:lodgement_date_end] = (options[:lodgement_date_end] || Date.today)
-    start_page = feed.applications(lodgement_date_start: options[:lodgement_date_start], lodgement_date_end: options[:lodgement_date_end])
 
     # Grab all of the pages
-    pages = self.fetch_all_pages(start_page, logger)
+    pages = self.fetch_all_pages(feed, options, logger)
 
     records = []
     pages.each do |page|
@@ -30,19 +29,54 @@ module ATDISPlanningAlertsFeed
 
   private
 
-  def self.fetch_all_pages(page, logger)
+  def self.fetch_all_pages(feed, options, logger)
+    begin
+      page = feed.applications({
+        lodgement_date_start: options[:lodgement_date_start], 
+        lodgement_date_end: options[:lodgement_date_end]
+      })
+    rescue RestClient::InternalServerError => e
+      # If the feed is known to be flakey, ignore the error
+      # on first fetch and assume the next run will pick this up
+      #
+      # Planningalerts itself will also notice if the median applications drops to 0
+      # over time
+      logger.error(e.message)
+      logger.debug(e.backtrace.join("\n"))
+      return [] if options[:flakey]
+      raise e
+    end
+
+    unless page.pagination && page.pagination.respond_to?(:current)
+      logger.warn("No/invalid pagination, assuming no records/aborting")
+      return []
+    end
+
     pages = [page]
     pages_processed = [page.pagination.current]
-    while page = page.next_page
-      # Some ATDIS feeds incorrectly provide pagination
-      # and permit looping; so halt processing if we've already processed this page
-      unless pages_processed.index(page.pagination.current).nil?
-        logger.info("Page #{page.pagination.current} already processed; halting")
-        break
+    begin
+      while page = page.next_page
+        unless page.pagination && page.pagination.respond_to?(:current)
+          logger.warn("No/invalid pagination, assuming no records/aborting")
+          break
+        end
+
+        # Some ATDIS feeds incorrectly provide pagination
+        # and permit looping; so halt processing if we've already processed this page
+        unless pages_processed.index(page.pagination.current).nil?
+          logger.info("Page #{page.pagination.current} already processed; halting")
+          break
+        end
+        pages << page
+        pages_processed << page.pagination.current 
+        logger.debug("Fetching #{page.next_url}")
       end
-      pages << page
-      pages_processed << page.pagination.current 
-      logger.debug("Fetching #{page.next_url}")
+    rescue RestClient::InternalServerError => e
+      # Raise the exception unless this is known to be flakey
+      # allowing some processing of records to take place
+      logger.error(e.message)
+      logger.debug(e.backtrace.join("\n"))
+      raise e unless options[:flakey]
     end
 
     pages
