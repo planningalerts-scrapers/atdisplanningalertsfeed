@@ -25,13 +25,17 @@ describe ATDISPlanningAlertsFeed, :vcr do
     }
   end
   context 'valid feed' do
-    it 'should not error' do
-      ATDISPlanningAlertsFeed.save("http://mycouncil2.solorient.com.au/Horizon/@@horizondap_ashfield@@/atdis/1.0/")
+    it 'should not error on empty feed' do
+      records = ATDISPlanningAlertsFeed.save("http://mycouncil2.solorient.com.au/Horizon/@@horizondap_ashfield@@/atdis/1.0/")
+
+      expect(records.length).to eq 0
     end
   end
   context 'dodgy pagination' do
     it 'should not error' do
-      ATDISPlanningAlertsFeed.save("https://myhorizon.maitland.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/")
+      records = ATDISPlanningAlertsFeed.save("https://myhorizon.maitland.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/")
+
+      expect(records.length).to eq 120
     end
   end
 end

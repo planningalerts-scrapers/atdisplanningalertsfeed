@@ -80,5 +80,7 @@ module ATDISPlanningAlertsFeed
         logger.info "Skipping already saved record " + record[:council_reference]
       end
     end
+
+    records
   end
 end
