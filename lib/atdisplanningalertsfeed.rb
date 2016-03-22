@@ -28,6 +28,7 @@ module ATDISPlanningAlertsFeed
       end
 
       pages_processed << page.pagination.current if save_page(page, logger)
+      logger.debug("Fetching #{page.next_url}")
     end
   end
 
