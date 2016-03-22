@@ -32,10 +32,8 @@ module ATDISPlanningAlertsFeed
     end
   end
 
-  def self.save_page(page, logger)
-    logger.info("Saving page #{page.pagination.current} of #{page.pagination.pages}")
-
-    page.response.each do |item|
+  def self.collect_records(page, logger)
+    page.response.collect do |item|
       application = item.application
 
       # TODO: Only using the first address because PA doesn't support multiple addresses right now
@@ -55,12 +53,23 @@ module ATDISPlanningAlertsFeed
         on_notice_from:    (application.info.notification_start_date.to_date if application.info.notification_start_date),
         on_notice_to:      (application.info.notification_end_date.to_date if application.info.notification_end_date)
       }
+    end
+  end
 
+  def self.persist_records(records, logger)
+    records.each do |record|
       if (ScraperWikiMorph.select("* from data where `council_reference`='#{record[:council_reference]}'").empty? rescue true)
         ScraperWikiMorph.save_sqlite([:council_reference], record)
       else
-        puts "Skipping already saved record " + record[:council_reference]
+        logger.info "Skipping already saved record " + record[:council_reference]
       end
     end
+  end
+
+  def self.save_page(page, logger)
+    logger.info("Saving page #{page.pagination.current} of #{page.pagination.pages}")
+
+    records = self.collect_records(page, logger)
+    self.persist_records(records, logger)
   end
 end
