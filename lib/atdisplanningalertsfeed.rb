@@ -11,14 +11,28 @@ module ATDISPlanningAlertsFeed
 
     options[:lodgement_date_start] = (options[:lodgement_date_start] || Date.today - 30)
     options[:lodgement_date_end] = (options[:lodgement_date_end] || Date.today)
-    page = feed.applications(lodgement_date_start: options[:lodgement_date_start], lodgement_date_end: options[:lodgement_date_end])
+    start_page = feed.applications(lodgement_date_start: options[:lodgement_date_start], lodgement_date_end: options[:lodgement_date_end])
 
-    # Save the first page
-    pages_processed = []
-    pages_processed << page.pagination.current if save_page(page, logger)
+    # Grab all of the pages
+    pages = self.fetch_all_pages(start_page, logger)
 
-    logger.debug("Fetching #{page.next_url}")
+    records = []
+    pages.each do |page|
+      additional_records = collect_records(page, logger)
+      # If there are no more records to fetch, halt processing
+      # regardless of pagination
+      break unless additional_records.any?
+      records += additional_records
+    end
 
+    self.persist_records(records, logger)
+  end
+
+  private
+
+  def self.fetch_all_pages(page, logger)
+    pages = [page]
+    pages_processed = [page.pagination.current]
     while page = page.next_page
       # Some ATDIS feeds incorrectly provide pagination
       # and permit looping; so halt processing if we've already processed this page
@@ -26,10 +40,12 @@ module ATDISPlanningAlertsFeed
         logger.info("Page #{page.pagination.current} already processed; halting")
         break
       end
-
-      pages_processed << page.pagination.current if save_page(page, logger)
+      pages << page
+      pages_processed << page.pagination.current 
       logger.debug("Fetching #{page.next_url}")
     end
+
+    pages
   end
 
   def self.collect_records(page, logger)
@@ -64,12 +80,5 @@ module ATDISPlanningAlertsFeed
         logger.info "Skipping already saved record " + record[:council_reference]
       end
     end
-  end
-
-  def self.save_page(page, logger)
-    logger.info("Saving page #{page.pagination.current} of #{page.pagination.pages}")
-
-    records = self.collect_records(page, logger)
-    self.persist_records(records, logger)
   end
 end
