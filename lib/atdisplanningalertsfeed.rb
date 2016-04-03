@@ -6,30 +6,84 @@ require 'cgi'
 module ATDISPlanningAlertsFeed
   def self.save(url, options = {})
     feed = ATDIS::Feed.new(url)
+    logger = options[:logger]
+    logger ||= Logger.new(STDOUT)
+
     options[:lodgement_date_start] = (options[:lodgement_date_start] || Date.today - 30)
     options[:lodgement_date_end] = (options[:lodgement_date_end] || Date.today)
-    page = feed.applications(lodgement_date_start: options[:lodgement_date_start], lodgement_date_end: options[:lodgement_date_end])
 
-    # Save the first page
-    pages_processed = []
-    pages_processed << page.pagination.current if save_page(page)
+    # Grab all of the pages
+    pages = self.fetch_all_pages(feed, options, logger)
 
-    while page = page.next_page
-      # Some ATDIS feeds incorrectly provide pagination
-      # and permit looping; so halt processing if we've already processed this page
-      unless pages_processed.index(page.pagination.current).nil?
-        puts "Page #{page.pagination.current} already processed; halting"
-        break
-      end
-
-      pages_processed << page.pagination.current if save_page(page)
+    records = []
+    pages.each do |page|
+      additional_records = collect_records(page, logger)
+      # If there are no more records to fetch, halt processing
+      # regardless of pagination
+      break unless additional_records.any?
+      records += additional_records
     end
+
+    self.persist_records(records, logger)
   end
 
-  def self.save_page(page)
-    puts "Saving page #{page.pagination.current} of #{page.pagination.pages}"
+  private
 
-    page.response.each do |item|
+  def self.fetch_all_pages(feed, options, logger)
+    begin
+      page = feed.applications({
+        lodgement_date_start: options[:lodgement_date_start], 
+        lodgement_date_end: options[:lodgement_date_end]
+      })
+    rescue RestClient::InternalServerError => e
+      # If the feed is known to be flakey, ignore the error
+      # on first fetch and assume the next run will pick this up
+      #
+      # Planningalerts itself will also notice if the median applications drops to 0
+      # over time
+      logger.error(e.message)
+      logger.debug(e.backtrace.join("\n"))
+      return [] if options[:flakey]
+      raise e
+    end
+
+    unless page.pagination && page.pagination.respond_to?(:current)
+      logger.warn("No/invalid pagination, assuming no records/aborting")
+      return []
+    end
+
+    pages = [page]
+    pages_processed = [page.pagination.current]
+    begin
+      while page = page.next_page
+        unless page.pagination && page.pagination.respond_to?(:current)
+          logger.warn("No/invalid pagination, assuming no records/aborting")
+          break
+        end
+
+        # Some ATDIS feeds incorrectly provide pagination
+        # and permit looping; so halt processing if we've already processed this page
+        unless pages_processed.index(page.pagination.current).nil?
+          logger.info("Page #{page.pagination.current} already processed; halting")
+          break
+        end
+        pages << page
+        pages_processed << page.pagination.current 
+        logger.debug("Fetching #{page.next_url}")
+      end
+    rescue RestClient::InternalServerError => e
+      # Raise the exception unless this is known to be flakey
+      # allowing some processing of records to take place
+      logger.error(e.message)
+      logger.debug(e.backtrace.join("\n"))
+      raise e unless options[:flakey]
+    end
+
+    pages
+  end
+
+  def self.collect_records(page, logger)
+    page.response.collect do |item|
       application = item.application
 
       # TODO: Only using the first address because PA doesn't support multiple addresses right now
@@ -49,12 +103,18 @@ module ATDISPlanningAlertsFeed
         on_notice_from:    (application.info.notification_start_date.to_date if application.info.notification_start_date),
         on_notice_to:      (application.info.notification_end_date.to_date if application.info.notification_end_date)
       }
+    end
+  end
 
+  def self.persist_records(records, logger)
+    records.each do |record|
       if (ScraperWikiMorph.select("* from data where `council_reference`='#{record[:council_reference]}'").empty? rescue true)
         ScraperWikiMorph.save_sqlite([:council_reference], record)
       else
-        puts "Skipping already saved record " + record[:council_reference]
+        logger.info "Skipping already saved record " + record[:council_reference]
       end
     end
+
+    records
   end
 end
