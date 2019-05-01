@@ -108,11 +108,7 @@ module ATDISPlanningAlertsFeed
 
   def self.persist_records(records, logger)
     records.each do |record|
-      if (ScraperWikiMorph.select("* from data where `council_reference`='#{record[:council_reference]}'").empty? rescue true)
-        ScraperWikiMorph.save_sqlite([:council_reference], record)
-      else
-        logger.info "Skipping already saved record " + record[:council_reference]
-      end
+      ScraperWikiMorph.save_sqlite([:council_reference], record)
     end
 
     records
