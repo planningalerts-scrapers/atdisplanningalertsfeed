@@ -40,6 +40,20 @@ describe ATDISPlanningAlertsFeed, :vcr do
     end
   end
 
+  context "feed with datetime in UTC" do
+    let(:records) do
+      ATDISPlanningAlertsFeed.save(
+        "https://jamezpolley.github.io/atdis_utcdatetime_test/atdis/1.0",
+        # In this case the options will be ignored by the receiving server
+        options
+      )
+    end
+
+    it "should convert the date received to the local timezone" do
+      expect(records[0][:date_received].to_s).to eq "2018-08-22"
+    end
+  end
+
   context "dodgy pagination" do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
