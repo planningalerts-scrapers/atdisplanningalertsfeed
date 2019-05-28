@@ -28,6 +28,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "vcr"
   spec.add_development_dependency "webmock"
 
-  spec.add_runtime_dependency "atdis"
+  spec.add_runtime_dependency "atdis", ">= 0.4.1"
   spec.add_runtime_dependency "scraperwiki-morph"
 end
