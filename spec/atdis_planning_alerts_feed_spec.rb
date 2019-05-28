@@ -21,7 +21,9 @@ describe ATDISPlanningAlertsFeed, :vcr do
   before :each do
     @options = {
       lodgement_date_start: Date.parse("2016-02-21"),
-      lodgement_date_end: Date.parse("2016-03-22")
+      lodgement_date_end: Date.parse("2016-03-22"),
+      # Make the tests run quietly
+      logger: Logger.new("/dev/null")
     }
   end
   context "valid feed" do
