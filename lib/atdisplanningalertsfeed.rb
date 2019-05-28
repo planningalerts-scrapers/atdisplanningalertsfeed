@@ -7,8 +7,8 @@ require "cgi"
 
 # Top level module for gem
 module ATDISPlanningAlertsFeed
-  def self.save(url, options = {})
-    feed = ATDIS::Feed.new(url, "UTC")
+  def self.save(url, timezone, options = {})
+    feed = ATDIS::Feed.new(url, timezone)
     logger = options[:logger]
     logger ||= Logger.new(STDOUT)
 

@@ -31,6 +31,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
         "http://mycouncil2.solorient.com.au/Horizon/@@horizondap_ashfield@@/atdis/1.0/",
+        "UTC",
         options
       )
     end
@@ -44,6 +45,8 @@ describe ATDISPlanningAlertsFeed, :vcr do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
         "https://jamezpolley.github.io/atdis_utcdatetime_test/atdis/1.0",
+        # The timezone for the council
+        "Sydney",
         # In this case the options will be ignored by the receiving server
         options
       )
@@ -58,6 +61,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
         "https://myhorizon.maitland.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
+        "UTC",
         options
       )
     end
@@ -71,6 +75,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
         "https://da.kiama.nsw.gov.au/atdis/1.0/",
+        "UTC",
         options
       )
     end
@@ -84,6 +89,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
     let(:records) do
       ATDISPlanningAlertsFeed.save(
         "http://myhorizon.cootamundra.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
+        "UTC",
         options.merge(flakey: true)
       )
     end
@@ -107,6 +113,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
       # (seen in Horizon DAP feeds)
       ATDISPlanningAlertsFeed.save(
         "http://mycouncil.yass.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
+        "UTC",
         options.merge(flakey: true)
       )
     end
