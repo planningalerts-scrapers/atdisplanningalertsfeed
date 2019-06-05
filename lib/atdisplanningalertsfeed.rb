@@ -109,11 +109,12 @@ module ATDISPlanningAlertsFeed
     end
   end
 
-  def self.persist_records(records)
-    records.each do |record|
-      ScraperWikiMorph.save_sqlite([:council_reference], record)
-    end
+  def self.persist_record(record)
+    ScraperWikiMorph.save_sqlite([:council_reference], record)
+  end
 
+  def self.persist_records(records)
+    records.each { |record| persist_record(record) }
     records
   end
 end
