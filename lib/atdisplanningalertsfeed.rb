@@ -18,24 +18,26 @@ module ATDISPlanningAlertsFeed
     # Grab all of the pages
     pages = fetch_all_pages(feed, options, logger)
 
-    records = []
     pages.each do |page|
       additional_records = collect_records(page)
+      additional_records.each { |record| yield record }
       # If there are no more records to fetch, halt processing
       # regardless of pagination
       break unless additional_records.any?
-
-      records += additional_records
     end
-
-    records.each { |record| yield(record) }
-    records
   end
 
   def self.save(url, timezone, options = {})
     fetch(url, timezone, options) do |record|
       persist_record(record)
     end
+  end
+
+  # Convenience method that returns all the records in one go
+  def self.return(url, timezone, options = {})
+    records = []
+    fetch(url, timezone, options) { |record| records << record }
+    records
   end
 
   def self.fetch_all_pages(feed, options, logger)

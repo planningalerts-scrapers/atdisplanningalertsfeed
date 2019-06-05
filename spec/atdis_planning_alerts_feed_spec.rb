@@ -29,7 +29,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
 
   context "valid feed" do
     let(:records) do
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "http://mycouncil2.solorient.com.au/Horizon/@@horizondap_ashfield@@/atdis/1.0/",
         "UTC",
         options
@@ -43,7 +43,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
 
   context "feed with datetime in UTC" do
     let(:records) do
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "https://jamezpolley.github.io/atdis_utcdatetime_test/atdis/1.0",
         # The timezone for the council
         "Sydney",
@@ -59,7 +59,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
 
   context "dodgy pagination" do
     let(:records) do
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "https://myhorizon.maitland.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
         "UTC",
         options
@@ -73,7 +73,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
 
   context "really dodgy pagination" do
     let(:records) do
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "https://da.kiama.nsw.gov.au/atdis/1.0/",
         "UTC",
         options
@@ -87,7 +87,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
 
   context "with a flakey service cootamundra" do
     let(:records) do
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "http://myhorizon.cootamundra.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
         "UTC",
         options.merge(flakey: true)
@@ -111,7 +111,7 @@ describe ATDISPlanningAlertsFeed, :vcr do
       # Yass isn't actually flakey, but Cootamundra is *too* flakey
       # This scenario replicates one page of many having an unhandled exception
       # (seen in Horizon DAP feeds)
-      ATDISPlanningAlertsFeed.save(
+      ATDISPlanningAlertsFeed.return(
         "http://mycouncil.yass.nsw.gov.au/Horizon/@@horizondap@@/atdis/1.0/",
         "UTC",
         options.merge(flakey: true)
