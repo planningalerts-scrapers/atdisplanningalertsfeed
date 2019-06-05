@@ -7,7 +7,7 @@ require "cgi"
 
 # Top level module for gem
 module ATDISPlanningAlertsFeed
-  def self.save(url, timezone, options = {})
+  def self.fetch(url, timezone, options = {})
     feed = ATDIS::Feed.new(url, timezone)
     logger = options[:logger]
     logger ||= Logger.new(STDOUT)
@@ -28,8 +28,14 @@ module ATDISPlanningAlertsFeed
       records += additional_records
     end
 
-    records.each { |record| persist_record(record) }
+    records.each { |record| yield(record) }
     records
+  end
+
+  def self.save(url, timezone, options = {})
+    fetch(url, timezone, options) do |record|
+      persist_record(record)
+    end
   end
 
   def self.fetch_all_pages(feed, options, logger)
